@@ -1,0 +1,7 @@
+name: mnist
+root: ~/datasets/mnist
+train:
+  split: train
+val:
+  split: test
+resize: 32

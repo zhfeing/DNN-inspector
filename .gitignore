@@ -3,11 +3,11 @@ __pycache__
 .vscode
 .DS_Store
 
+vis
 run
 backup
 debug
 watch_tb*
-vis/result
 *.out
 output.txt
 run*.sh

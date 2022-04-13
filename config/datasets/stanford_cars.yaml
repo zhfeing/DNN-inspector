@@ -1,0 +1,7 @@
+name: stanford_cars
+root: ~/datasets/stanford-cars
+train:
+  split: train
+val:
+  split: test
+resize: 224
