@@ -1,0 +1,50 @@
+dataset:
+  name: cifar_100
+  root: ~/datasets/cifar
+  train:
+    split: train
+  val:
+    split: test
+  resize: 224
+
+training:
+  train_epochs: 240
+  print_interval: 20
+  val_interval: 1000
+  batch_size: 64
+  num_workers: 16
+  sync_bn: True
+  pre_train: run/resnet-50-cifar-100-best.pth
+
+model:
+  # cfg names
+  name: official_models
+  model_name: ResNet50
+
+plot:
+  direction:
+    norm: filter
+    ignore: bias_bn
+  coordinate:
+    x_axis:
+      start: -1
+      end: 1
+      steps: 21
+    y_axis:
+      start: -1
+      end: 1
+      steps: 21
+  cfg:
+    levels: 5
+    vtp_cfg:
+      z_err_max: -1
+      z_loss_max: 1.0e+9
+      normalize_loss: -1
+      num_interpolate_points: -1
+      show_points: True
+      show_polys: True
+
+loss:
+  name: ce_loss
+  weight_dict:
+    cls: 1.0
