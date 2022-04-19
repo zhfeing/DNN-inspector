@@ -2,8 +2,8 @@ name: imagenet=100
 root: ~/datasets/ILSVRC2012
 train:
   split: train
-  manual_classes_fp: scripts/sub_imagenet_100_2.csv
+  manual_classes_fp: config/datasets/sub_imagenet_100.csv
 val:
   split: val
-  manual_classes_fp: scripts/sub_imagenet_100_2.csv
+  manual_classes_fp: config/datasets/sub_imagenet_100.csv
 resize: 224
