@@ -2,6 +2,8 @@ import logging
 import copy
 from typing import Dict, Any
 
+from torch.utils.data import DataLoader
+
 import cv_lib.classification.data as cls_data
 import cv_lib.distributed.utils as dist_utils
 from cv_lib.distributed.sampler import get_train_sampler, get_val_sampler
@@ -35,7 +37,8 @@ def build_eval_dataset(data_cfg: Dict[str, Any]):
             name, len(val_dataset), n_classes
         )
     dist_utils.barrier()
-    return val_dataset, n_classes
+    img_channels = val_dataset.img_channels
+    return val_dataset, n_classes, img_channels
 
 
 def build_train_dataset(data_cfg: Dict[str, Any]):
@@ -43,7 +46,7 @@ def build_train_dataset(data_cfg: Dict[str, Any]):
     # get dataloader
     train_aug = get_data_aug(data_cfg["name"], "train")
     val_aug = get_data_aug(data_cfg["name"], "val")
-    train_dataset, val_dataset, n_classes = cls_data.get_dataset(
+    train_dataset, val_dataset, n_classes, img_channels = cls_data.get_dataset(
         data_cfg,
         train_aug,
         val_aug
@@ -54,5 +57,33 @@ def build_train_dataset(data_cfg: Dict[str, Any]):
             data_cfg["name"], len(train_dataset), len(val_dataset), n_classes
         )
     dist_utils.barrier()
-    return train_dataset, val_dataset, n_classes
+    return train_dataset, val_dataset, n_classes, img_channels
+
+
+def build_train_dataloader(
+    data_cfg: Dict[str, Any],
+    num_worker: int,
+    train_batch_size: int,
+    val_batch_size: int,
+    drop_last: bool = True
+):
+    train_dataset, val_dataset, n_classes, img_channels = build_train_dataset(data_cfg)
+    train_loader = DataLoader(
+        dataset=train_dataset,
+        sampler=get_train_sampler(False, train_dataset),
+        num_workers=num_worker,
+        pin_memory=True,
+        batch_size=train_batch_size,
+        drop_last=drop_last
+    )
+    val_loader = DataLoader(
+        dataset=val_dataset,
+        sampler=get_val_sampler(False, val_dataset),
+        num_workers=num_worker,
+        pin_memory=True,
+        batch_size=val_batch_size,
+        drop_last=drop_last
+    )
+
+    return train_loader, val_loader, n_classes, img_channels
 
