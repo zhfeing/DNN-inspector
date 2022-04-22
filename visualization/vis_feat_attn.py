@@ -105,17 +105,20 @@ def vis_mid_feat(
 def vis_attn(attentions: Dict[str, torch.Tensor], save_path: str, img_id: int):
     save_path = os.path.join(save_path, f"seq_img_{img_id}")
     os.makedirs(save_path, exist_ok=True)
+    h5_file = h5py.File(os.path.join(save_path, "attn.h5"), mode="w")
     for name, val in attentions.items():
         val = val.squeeze()
         fp = os.path.join(save_path, f"l-{name}.png")
         assert val.dim() == 3
         # val = torch.pow(val, 0.5)
         feat = val.mean(dim=0).cpu().numpy()
-
-        sns.heatmap(feat[1:, 1:], cmap="coolwarm", xticklabels=False, yticklabels=False)
+        attn = feat[1:, 1:]
+        h5_file[name] = attn
+        sns.heatmap(attn, cmap="coolwarm", xticklabels=False, yticklabels=False)
         fp = os.path.join(save_path, f"l-{name}-attn.png")
         plt.savefig(fp, bbox_inches="tight")
         plt.close()
+    h5_file.close()
 
 
 def main(args):

@@ -2,6 +2,8 @@ from typing import Dict, Tuple
 
 import torch
 
+from .accumulator import Accumulator, Accumulators
+
 
 def move_data_to_device(
     x: torch.Tensor,
