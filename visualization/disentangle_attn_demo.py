@@ -39,7 +39,13 @@ def disentangle_attn(raw_attn: torch.Tensor, start_id: int):
     return ret
 
 
-def analysis_mhsa(attentions: Dict[str, torch.Tensor], save_path: str, img_id: int, start_id: int):
+def analysis_mhsa(
+    attentions: Dict[str, torch.Tensor],
+    save_path: str,
+    img_id: int,
+    start_id: int,
+    vis_head: bool = False
+):
     logger = logging.getLogger("analysis_mhsa")
     save_path = os.path.join(save_path, f"mhsa_{img_id}")
     os.makedirs(save_path, exist_ok=True)
@@ -62,8 +68,9 @@ def analysis_mhsa(attentions: Dict[str, torch.Tensor], save_path: str, img_id: i
         mean_attn = mhsa.mean(dim=0)
         attn_head = mhsa.unbind(dim=0)
         vis_attn(mean_attn, os.path.join(path, "mean"))
-        for h_id, attn in enumerate(attn_head):
-            vis_attn(attn, os.path.join(path, f"head-{h_id}"))
+        if vis_head:
+            for h_id, attn in enumerate(attn_head):
+                vis_attn(attn, os.path.join(path, f"head-{h_id}"))
 
 
 def main(args):
@@ -99,7 +106,6 @@ def main(args):
     # create model
     logger.info("Building model...")
     model: torch.jit.RecursiveScriptModule = torch.jit.load(args.jit, map_location="cpu")
-    
 
     model.to(device)
     with torch.no_grad():
@@ -115,7 +121,7 @@ def main(args):
             img_id = gt["image_id"].item()
             img = un_norm(x[0])
             draw_img(img, os.path.join(args.save_path, f"{img_id}.png"))
-            analysis_mhsa(mid_attn, args.save_path, img_id, start_id=args.start_id)
+            analysis_mhsa(mid_attn, args.save_path, img_id, start_id=args.start_id, vis_head=args.vis_head)
             i += 1
 
 
@@ -128,6 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--start_id", type=int, default=0)
     parser.add_argument("--raw_attn_names", nargs="+", default=list())
+    parser.add_argument("--vis_head", action="store_true")
     args = parser.parse_args()
     os.makedirs(args.save_path, exist_ok=True)
     main(args)
