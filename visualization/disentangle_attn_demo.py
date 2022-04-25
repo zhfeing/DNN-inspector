@@ -28,11 +28,14 @@ def draw_img(img: torch.Tensor, save_fp: str):
 
 def disentangle_attn(raw_attn: torch.Tensor, start_id: int):
     raw_attn = raw_attn[start_id:, start_id:]
-    attn_symmetric = (raw_attn + raw_attn.T) / 2
-    attn_skew = (raw_attn - raw_attn.T) / 2
+    cls_pattern = raw_attn.mean(dim=0, keepdim=True)
+    attn = raw_attn - cls_pattern
+    attn_symmetric = (attn + attn.T) / 2
+    attn_skew = (attn - attn.T) / 2
 
     ret = {
         "raw_attn": raw_attn,
+        "cls_pattern": cls_pattern,
         "symmetric": attn_symmetric,
         "skew": attn_skew
     }
