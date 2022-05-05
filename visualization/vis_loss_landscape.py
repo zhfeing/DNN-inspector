@@ -1,5 +1,5 @@
 import os
-import copy
+import random
 import functools
 import itertools
 import logging
@@ -13,9 +13,10 @@ import torch.backends.cudnn
 import torch.multiprocessing as mp
 
 from cv_lib.logger import MultiProcessLoggerListener
-from cv_lib.utils import get_root_logger, make_deterministic
+import cv_lib.utils as cv_utils
 from cv_lib.config_parsing import get_cfg
 
+from utils import ModelWrapper
 from utils.task_scheduler import GPUTaskScheduler
 from driver.data import build_train_dataloader
 from driver.loss import get_loss_fn
@@ -40,13 +41,15 @@ def eval_at_coordinate(
 
     data_cfg: Dict[str, Any] = task_args["data_cfg"]
     loss_cfg: Dict[str, Any] = task_args["loss_cfg"]
-    model: torch.jit.ScriptModule = task_args["model"]
-    directions: Dict[str, torch.Tensor] = task_args["directions"]
     x_coordinate: float = task_args["x_coordinate"]
     y_coordinate: float = task_args["y_coordinate"]
     args: bool = task_args["args"]
 
-    eval_fp = os.path.join(args.save_path, "eval", f"{task_id}.json")
+    # read direction
+    direction_fp = os.path.join(args.save_path, "direction.pth")
+    directions = torch.load(direction_fp, map_location="cpu")
+
+    eval_fp = os.path.join(args.save_path, "eval", f"{task_id}.pkl")
     if not args.override and os.path.isfile(eval_fp):
         return
 
@@ -56,6 +59,15 @@ def eval_at_coordinate(
     device = torch.device("cuda:{}".format(gpu_id))
     torch.cuda.set_device(device)
 
+    # get model
+    model: torch.jit.ScriptModule = torch.jit.load(args.jit, map_location="cpu")
+    set_weights(
+        model,
+        x_step=x_coordinate,
+        y_step=y_coordinate,
+        **directions
+    )
+    model = ModelWrapper(model, True)
     model.to(device)
     loss_fn = get_loss_fn(loss_cfg).to(device)
 
@@ -81,12 +93,13 @@ def eval_at_coordinate(
         device=device
     )
     result = evaluator(model)
+    torch.save(result, eval_fp)
 
 
 def logger_constructor(logger_fp: str):
     logger_dir = os.path.dirname(logger_fp)
     os.makedirs(logger_dir, exist_ok=True)
-    logger = get_root_logger(
+    logger = cv_utils.get_root_logger(
         level=logging.INFO,
         name=None,
         logger_fp=logger_fp
@@ -94,21 +107,34 @@ def logger_constructor(logger_fp: str):
     return logger, logger_fp
 
 
+def plot(args):
+    eval_path = os.path.join(args.save_path, "eval")
+    eval_files = os.listdir(eval_path)
+    for filename in eval_files:
+        fp = os.path.join(eval_path, filename)
+        result = torch.load(fp, map_location="cpu")
+        print(result)
+
+
 def main(args):
     # multi-process logger
-    logger_listener = MultiProcessLoggerListener(logger_constructor, START_METHOD)
+    logger_fp = os.path.join(args.save_path, "run.log")
+    logger_listener = MultiProcessLoggerListener(
+        functools.partial(logger_constructor, logger_fp=logger_fp),
+        START_METHOD
+    )
     logger = logger_listener.get_logger()
 
     # setup global variables
     # split configs
+    data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
     global_cfg = get_cfg(args.cfg_fp)
-    data_cfg: Dict[str, Any] = get_cfg(global_cfg["data"])
     loss_cfg: Dict[str, Any] = global_cfg["loss"]
     plot_cfg: Dict[str, Any] = global_cfg["plot"]
 
     # make determinstic
     if args.seed is not None:
-        make_deterministic(args.seed)
+        cv_utils.make_deterministic(args.seed)
 
     # create model
     logger.info("Building model...")
@@ -116,7 +142,7 @@ def main(args):
 
     # setup direction
     direction_fp = os.path.join(args.save_path, "direction.pth")
-    directions = setup_direction(
+    setup_direction(
         direction_fp=direction_fp,
         model=model,
         override=args.override,
@@ -131,18 +157,16 @@ def main(args):
     )
     # create tasks
     task_base_args = {
-        "directions": directions,
         "data_cfg": data_cfg,
         "loss_cfg": loss_cfg,
-        "model": model,
         "args": args
     }
     iters = list(itertools.product(coordinates["x_coordinate"], coordinates["y_coordinate"]))
     tasks = list()
     for task_id, (x, y) in enumerate(iters):
         task_args = dict(
-            x_coordinate=x,
-            y_coordinate=y,
+            x_coordinate=x.item(),
+            y_coordinate=y.item(),
             **task_base_args
         )
         task = functools.partial(
@@ -151,7 +175,8 @@ def main(args):
             task_args=task_args,
         )
         tasks.append(task)
-
+    # shuffle tasks for faster visualization
+    random.shuffle(tasks)
     # assign tasks
     n_gpus = torch.cuda.device_count()
     logger.info("Detected %d gpus", n_gpus)
@@ -193,13 +218,18 @@ def main(args):
         # make sure listener is stopped
         logger_listener.stop()
 
+    plot(args)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg_fp", type=str)
+    parser.add_argument("--data_cfg", type=str)
     parser.add_argument("--jit", type=str)
     parser.add_argument("--save_path", type=str)
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--num_worker", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--use_train", action="store_true")
     parser.add_argument("--override", action="store_true")
     args = parser.parse_args()

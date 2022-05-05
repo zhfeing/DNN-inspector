@@ -1,0 +1,18 @@
+loss:
+  name: ce_loss
+  weight_dict:
+    cls: 1.0
+
+plot:
+  direction:
+    norm: filter
+    ignore: bias_bn
+  coordinate:
+    x_axis:
+      start: -1
+      end: 1
+      steps: 3
+    y_axis:
+      start: -1
+      end: 1
+      steps: 3

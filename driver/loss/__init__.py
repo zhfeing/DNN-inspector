@@ -3,13 +3,10 @@ from typing import Any, Dict
 
 from .base_loss import CELoss, Loss, DistillKL
 from .hint_loss import DistillHint
-from .mutual_loss import BaseMutualLoss, JointMutualLoss
 
 
 __REGISTERED_LOSS__ = {
     "ce_loss": CELoss,
-    "base_mutual_loss": BaseMutualLoss,
-    "joint_mutual_loss": JointMutualLoss,
 }
 
 
