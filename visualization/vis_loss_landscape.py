@@ -19,7 +19,7 @@ from cv_lib.config_parsing import get_cfg
 from utils import ModelWrapper
 from utils.task_scheduler import GPUTaskScheduler
 from driver.data import build_train_dataloader
-from driver.loss import get_loss_fn
+from driver.loss import get_loss_fn, l2_norm, l1_norm
 from driver.eval import Evaluation
 from dnn_inspector.loss_landscape.direction import setup_direction
 from dnn_inspector.loss_landscape.surface import setup_coordinates
@@ -93,6 +93,11 @@ def eval_at_coordinate(
         device=device
     )
     result = evaluator(model)
+
+    l1_loss = l1_norm(model)
+    l2_loss = l2_norm(model)
+    result["model_l1"] = l1_loss
+    result["model_l2"] = l2_loss
     torch.save(result, eval_fp)
 
 

@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from .base_loss import CELoss, Loss, DistillKL
 from .hint_loss import DistillHint
+from .model_norm import l1_norm, l2_norm
 
 
 __REGISTERED_LOSS__ = {

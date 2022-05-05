@@ -11,8 +11,8 @@ plot:
     x_axis:
       start: -1
       end: 1
-      steps: 3
+      steps: 21
     y_axis:
       start: -1
       end: 1
-      steps: 3
+      steps: 21
