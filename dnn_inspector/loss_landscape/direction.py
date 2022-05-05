@@ -1,13 +1,9 @@
-from collections import OrderedDict
+import collections
 import logging
-import os
-from typing import List
+from typing import List, Dict
 
 import torch
-from torch import Tensor
 import torch.nn as nn
-
-from .projection import flatten
 
 
 def setup_direction(
@@ -16,37 +12,48 @@ def setup_direction(
     norm: str,
     ignore: str,
     override: bool = True
-):
+) -> Dict[str, torch.Tensor]:
     logger = logging.getLogger("setup_direction")
     logger.info("Setting up directions")
 
-    if os.path.isfile(direction_fp) and not override:
-        logger.info("Direction file already exists")
-        return
+    def create():
+        directions = collections.OrderedDict()
+        directions["x_direction"] = create_random_direction(
+            model=model,
+            norm=norm,
+            ignore=ignore
+        )
+        directions["y_direction"] = create_random_direction(
+            model=model,
+            norm=norm,
+            ignore=ignore
+        )
+        torch.save(directions, direction_fp)
+        logger.info("Direction saved")
+        return directions
 
-    directions = OrderedDict()
-    directions["x_direction"] = create_random_direction(
-        model=model,
-        norm=norm,
-        ignore=ignore
+    if not override:
+        try:
+            return torch.load(direction_fp)
+        except:
+            logger.info("Loading surface file failed, creating...")
+
+    directions = create()
+    sim = torch.cosine_similarity(
+        flatten(directions["x_direction"]),
+        flatten(directions["y_direction"]),
+        dim=0
     )
-    directions["y_direction"] = create_random_direction(
-        model=model,
-        norm=norm,
-        ignore=ignore
-    )
-    # sim = torch.cosine_similarity(flatten(directions["x_direction"]), flatten(directions["y_direction"]), dim=0)
-    # logger.info("Cosine similarity between x-axis and y-axis is: %s", str(sim))
-
-    torch.save(directions, direction_fp)
-    logger.info("Write direction done")
+    logger.info("Cosine similarity between x-axis and y-axis is: %s", str(sim))
+    return directions
 
 
-def get_parameters(model: nn.Module) -> List[Tensor]:
-    return list(w.detach() for w in model.parameters())
+@torch.no_grad()
+def get_parameters(model: nn.Module) -> List[torch.Tensor]:
+    return list(model.parameters())
 
 
-def get_random_weights(weights: List[Tensor]) -> List[Tensor]:
+def get_random_weights(weights: List[torch.Tensor]) -> List[torch.Tensor]:
     return list(torch.randn_like(w) for w in weights)
 
 
@@ -61,9 +68,10 @@ def create_random_direction(
     return direction
 
 
+@torch.no_grad()
 def normalize_directions_for_weights(
-    direction: List[Tensor],
-    weights: List[Tensor],
+    direction: List[torch.Tensor],
+    weights: List[torch.Tensor],
     norm: str,
     ignore: str
 ):
@@ -83,9 +91,10 @@ def normalize_directions_for_weights(
             normalize_direction(d, w, norm)
 
 
+@torch.no_grad()
 def normalize_direction(
-    direction: Tensor,
-    weights: Tensor,
+    direction: torch.Tensor,
+    weights: torch.Tensor,
     norm: str,
     eps: float = 1e-10
 ):
@@ -115,9 +124,16 @@ def normalize_direction(
         # Rescale the entries in the direction so that each filter direction
         # has the unit norm.
         for d in direction:
-            d.div_(d.norm() + 1e-10)
+            d.div_(d.norm() + eps)
     elif norm == "dlayer":
         # Rescale the entries in the direction so that each layer direction has
         # the unit norm.
         direction.div_(direction.norm())
+    else:
+        raise NotImplementedError
+
+
+def flatten(tensors: List[torch.Tensor]) -> torch.Tensor:
+    tensors = list(t.flatten() for t in tensors)
+    return torch.cat(tensors)
 
