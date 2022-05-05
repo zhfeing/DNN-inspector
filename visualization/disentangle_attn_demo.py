@@ -77,9 +77,6 @@ def analysis_mhsa(
 
 
 def main(args):
-    """
-    What created in this function is only used in this process and not shareable
-    """
     logger = cv_utils.get_root_logger(logging.INFO, os.path.join(args.save_path, "disentangle.log"))
     # split configs
     data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
@@ -108,7 +105,7 @@ def main(args):
 
     # create model
     logger.info("Building model...")
-    model: torch.jit.RecursiveScriptModule = torch.jit.load(args.jit, map_location="cpu")
+    model: torch.jit.ScriptModule = torch.jit.load(args.jit, map_location="cpu")
 
     model.to(device)
     with torch.no_grad():

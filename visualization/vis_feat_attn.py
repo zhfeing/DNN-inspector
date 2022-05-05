@@ -122,9 +122,6 @@ def vis_attn(attentions: Dict[str, torch.Tensor], save_path: str, img_id: int):
 
 
 def main(args):
-    """
-    What created in this function is only used in this process and not shareable
-    """
     # split configs
     data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
 
@@ -152,7 +149,7 @@ def main(args):
 
     # create model
     print("Building model...")
-    model = torch.jit.load(args.jit, map_location="cpu")
+    model: torch.jit.ScriptModule = torch.jit.load(args.jit, map_location="cpu")
     model.to(device)
     with torch.no_grad():
         model.to(device)
