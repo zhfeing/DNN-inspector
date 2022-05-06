@@ -10,7 +10,7 @@ import numpy as np
 
 import torch
 
-from loss_landscape.gerenate_vtk import generate_vtp
+from .gerenate_vtk import generate_vtp
 
 
 def plot_contour(
@@ -90,23 +90,4 @@ def plot_contour(
         save_fp=os.path.join(save_path, "surface_{name}.vtp"),
         **vtp_cfg
     )
-
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--coordinates_fp")
-    parser.add_argument("--eval_fp")
-    parser.add_argument("--save_path")
-    parser.add_argument("--levels", type=int)
-    args = parser.parse_args()
-
-    plot_contour(
-        coordinates_fp=args.coordinates_fp,
-        eval_fp=args.eval_fp,
-        save_path=args.save_path,
-        levels=args.levels,
-        vtp_cfg=dict()
-    )
-
 

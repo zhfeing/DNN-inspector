@@ -96,7 +96,7 @@ def normalize_direction(
     direction: torch.Tensor,
     weights: torch.Tensor,
     norm: str,
-    eps: float = 1e-10
+    eps: float = 1e-7
 ):
     """
         Rescale the direction so that it has similar norm as their corresponding
@@ -110,8 +110,7 @@ def normalize_direction(
     if norm == "filter":
         # Rescale the filters (weights in group) in "direction" so that each
         # filter has the same norm as its corresponding filter in "weights".
-        for d, w in zip(direction, weights):
-            d.mul_(w.norm() / (d.norm() + eps))
+        direction.mul_(weights.norm(dim=0, keepdim=True) / (direction.norm(dim=0, keepdim=True) + eps))
     elif norm == "layer":
         # Rescale the layer variables in the direction so that each layer has
         # the same norm as the layer variables in weights.

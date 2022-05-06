@@ -94,8 +94,9 @@ def eval_at_coordinate(
     )
     result = evaluator(model)
 
-    l1_loss = l1_norm(model)
-    l2_loss = l2_norm(model)
+    with torch.no_grad():
+        l1_loss = l1_norm(model)
+        l2_loss = l2_norm(model)
     result["model_l1"] = l1_loss
     result["model_l2"] = l2_loss
     torch.save(result, eval_fp)
@@ -166,7 +167,7 @@ def main(args):
         "loss_cfg": loss_cfg,
         "args": args
     }
-    iters = list(itertools.product(coordinates["x_coordinate"], coordinates["y_coordinate"]))
+    iters = itertools.product(coordinates["x_coordinate"], coordinates["y_coordinate"])
     tasks = list()
     for task_id, (x, y) in enumerate(iters):
         task_args = dict(
