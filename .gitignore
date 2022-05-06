@@ -11,3 +11,4 @@ watch_tb*
 *.out
 output.txt
 run*.sh
+run-gkd
