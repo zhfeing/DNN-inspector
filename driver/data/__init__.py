@@ -18,7 +18,7 @@ def build_eval_dataset(data_cfg: Dict[str, Any]):
     name = name.split("=")[0]
     dataset = cls_data.__REGISTERED_DATASETS__[name]
     root = data_cfg.pop("root")
-    val_data_cfg = data_cfg.pop("val")
+    val_data_cfg = data_cfg.pop("val", dict())
     val_aug = get_data_aug(name, "val")
     data_cfg.pop("train", None)
 

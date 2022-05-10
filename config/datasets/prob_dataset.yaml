@@ -1,0 +1,4 @@
+name: prob_dataset
+root: ~/project/dark-knowledge-graph/test_data/imagenet_10
+resize: 224
+make_partial: 0.1

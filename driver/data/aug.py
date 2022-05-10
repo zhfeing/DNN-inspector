@@ -39,6 +39,8 @@ __REGISTERED_AUG__ = {
     "cub_200_val": imagenet_val_aug,
     "stanford_cars_train": imagenet_train_aug,
     "stanford_cars_val": imagenet_val_aug,
+    "prob_dataset_train": imagenet_train_aug,
+    "prob_dataset_val": imagenet_val_aug,
 }
 
 
