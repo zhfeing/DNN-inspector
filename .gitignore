@@ -4,6 +4,7 @@ __pycache__
 .DS_Store
 
 vis
+vis-*
 run
 backup
 debug

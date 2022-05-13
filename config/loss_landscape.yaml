@@ -16,3 +16,5 @@ plot:
       start: -1
       end: 1
       steps: 21
+  levels: 8
+  dpi: 500
