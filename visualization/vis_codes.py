@@ -13,7 +13,6 @@ import torch.backends.cudnn
 import torch.utils.data as data
 
 import cv_lib.utils as cv_utils
-from cv_lib.config_parsing import get_cfg
 from cv_lib.augmentation import UnNormalize
 
 from driver.data import build_eval_dataset
@@ -56,7 +55,7 @@ def vis_codes(
         h5_file[name] = feat
         sns.heatmap(feat, cmap="vlag", xticklabels=False, yticklabels=False)
         fp = os.path.join(save_path, f"l-{name}.png")
-        plt.savefig(fp, bbox_inches="tight")
+        plt.savefig(fp, bbox_inches="tight", dpi=480)
         plt.close()
 
     vis_feat(origin_feat, "origin")
@@ -66,14 +65,14 @@ def vis_codes(
     h5_file["codes"] = codes
     sns.heatmap(codes, xticklabels=False, yticklabels=False, cbar=False, annot=True, fmt="d", square=True)
     fp = os.path.join(save_path, "codes.png")
-    plt.savefig(fp, bbox_inches="tight")
+    plt.savefig(fp, bbox_inches="tight", dpi=480)
     plt.close()
     h5_file.close()
 
 
 def main(args):
     # split configs
-    data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
+    data_cfg: Dict[str, Any] = cv_utils.get_cfg(args.data_cfg)
 
     # set cuda
     torch.backends.cudnn.benchmark = True
@@ -100,9 +99,8 @@ def main(args):
     # create model
     print("Building model...")
     model: torch.jit.ScriptModule = torch.jit.load(args.jit, map_location="cpu")
-    model.to(device)
+    model.eval().to(device)
     with torch.no_grad():
-        model.to(device)
         i = 1
         for x, gt in tqdm.tqdm(val_loader, total=args.total):
             if i > args.total:

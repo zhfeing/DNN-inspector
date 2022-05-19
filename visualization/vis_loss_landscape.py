@@ -17,7 +17,6 @@ import torch.multiprocessing as mp
 
 from cv_lib.logger import MultiProcessLoggerListener
 import cv_lib.utils as cv_utils
-from cv_lib.config_parsing import get_cfg
 
 from utils import ModelWrapper
 from utils.task_scheduler import GPUTaskScheduler
@@ -239,8 +238,8 @@ def main(args):
 
     # setup global variables
     # split configs
-    data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
-    global_cfg = get_cfg(args.cfg_fp)
+    data_cfg: Dict[str, Any] = cv_utils.get_cfg(args.data_cfg)
+    global_cfg = cv_utils.get_cfg(args.cfg_fp)
     loss_cfg: Dict[str, Any] = global_cfg["loss"]
     plot_cfg: Dict[str, Any] = global_cfg["plot"]
 
@@ -351,7 +350,7 @@ if __name__ == "__main__":
     os.makedirs(args.save_path, exist_ok=True)
     os.makedirs(os.path.join(args.save_path, "eval"), exist_ok=True)
     if args.direct_plot:
-        global_cfg = get_cfg(args.cfg_fp)
+        global_cfg = cv_utils.get_cfg(args.cfg_fp)
         plot_cfg: Dict[str, Any] = global_cfg["plot"]
         plot_main(args.save_path, plot_cfg, args.l2_weight)
     else:

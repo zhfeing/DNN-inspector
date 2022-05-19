@@ -15,7 +15,6 @@ import torch.utils.data as data
 import torchvision.transforms.functional as TF
 
 import cv_lib.utils as cv_utils
-from cv_lib.config_parsing import get_cfg
 from cv_lib.augmentation import UnNormalize
 
 from driver.data import build_eval_dataset
@@ -79,7 +78,7 @@ def analysis_mhsa(
 def main(args):
     logger = cv_utils.get_root_logger(logging.INFO, os.path.join(args.save_path, "disentangle.log"))
     # split configs
-    data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
+    data_cfg: Dict[str, Any] = cv_utils.get_cfg(args.data_cfg)
 
     # set cuda
     torch.backends.cudnn.benchmark = True
@@ -107,9 +106,8 @@ def main(args):
     logger.info("Building model...")
     model: torch.jit.ScriptModule = torch.jit.load(args.jit, map_location="cpu")
 
-    model.to(device)
+    model.eval().to(device)
     with torch.no_grad():
-        model.to(device)
         i = 1
         for x, gt in tqdm.tqdm(val_loader, total=args.total):
             if i > args.total:

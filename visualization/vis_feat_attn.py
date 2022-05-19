@@ -15,7 +15,6 @@ import torchvision.transforms.functional as TF
 import torch.utils.data as data
 
 import cv_lib.utils as cv_utils
-from cv_lib.config_parsing import get_cfg
 import cv_lib.visualization as vis
 from cv_lib.augmentation import UnNormalize
 
@@ -123,7 +122,7 @@ def vis_attn(attentions: Dict[str, torch.Tensor], save_path: str, img_id: int):
 
 def main(args):
     # split configs
-    data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
+    data_cfg: Dict[str, Any] = cv_utils.get_cfg(args.data_cfg)
 
     # set cuda
     torch.backends.cudnn.benchmark = True
@@ -150,9 +149,8 @@ def main(args):
     # create model
     print("Building model...")
     model: torch.jit.ScriptModule = torch.jit.load(args.jit, map_location="cpu")
-    model.to(device)
+    model.eval().to(device)
     with torch.no_grad():
-        model.to(device)
         i = 1
         for x, gt in tqdm.tqdm(val_loader, total=args.total):
             if i > args.total:

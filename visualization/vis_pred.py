@@ -12,7 +12,6 @@ import torch.cuda
 import torch.backends.cudnn
 
 import cv_lib.utils as cv_utils
-from cv_lib.config_parsing import get_cfg
 
 from driver.data import build_train_dataloader
 from utils import Accumulators
@@ -20,7 +19,7 @@ from utils import Accumulators
 
 def main(args):
     # split configs
-    data_cfg: Dict[str, Any] = get_cfg(args.data_cfg)
+    data_cfg: Dict[str, Any] = cv_utils.get_cfg(args.data_cfg)
 
     # set cuda
     torch.backends.cudnn.benchmark = True
@@ -44,7 +43,7 @@ def main(args):
     # create model
     print("Building model...")
     model: torch.jit.ScriptModule = torch.jit.load(args.jit, map_location="cpu")
-    model.to(device)
+    model.eval().to(device)
 
     print("Running through dataset")
     batch_idx = torch.arange(args.batch_size, device=device)
