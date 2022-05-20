@@ -34,7 +34,7 @@ def vis_attr(
     attribution = attribution.detach().clamp_min(0).mean(dim=0)
     attribution = attribution.cpu().numpy()
 
-    sns.heatmap(attribution, cmap="vlag", xticklabels=False, yticklabels=False)
+    sns.heatmap(attribution, xticklabels=False, yticklabels=False)
     attr_fp = os.path.join(save_path, f"img_{img_id}_attr.png")
     plt.savefig(attr_fp, bbox_inches="tight", dpi=480)
     plt.close()
