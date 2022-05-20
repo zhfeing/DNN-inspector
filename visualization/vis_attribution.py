@@ -31,7 +31,7 @@ def vis_attr(
     attribution = attribution.squeeze()
     assert attribution.dim() == 3
 
-    attribution = attribution.detach().clamp_min(0).mean(dim=0)
+    attribution = attribution.detach().sum(dim=0).clamp_min(0)
     attribution = attribution.cpu().numpy()
 
     sns.heatmap(attribution, xticklabels=False, yticklabels=False)
